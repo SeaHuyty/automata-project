@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { API_ENDPOINTS } from "../../config/api";
 
 const NFAtoDFA = ({ transitions, start_state, end_states, states, symbols }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -72,7 +73,7 @@ const NFAtoDFA = ({ transitions, start_state, end_states, states, symbols }) => 
     setImageError(null);
 
     try {
-      const response = await axios.post("http://localhost:5000/api/convert-nfa-to-dfa", {
+      const response = await axios.post(API_ENDPOINTS.CONVERT_NFA_TO_DFA, {
         transitions,
         symbols,
         start_state,
@@ -113,7 +114,7 @@ const NFAtoDFA = ({ transitions, start_state, end_states, states, symbols }) => 
     setImageData(null);
 
     try {
-      const response = await axios.post("http://localhost:5000/api/generate-automaton-image", {
+      const response = await axios.post(API_ENDPOINTS.GENERATE_AUTOMATON_IMAGE, {
         transitions: dfaData.transitions,
         symbols: dfaData.symbols,
         start_state: dfaData.start_state,

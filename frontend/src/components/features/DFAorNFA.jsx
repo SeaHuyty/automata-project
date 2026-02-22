@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { instance } from "@viz-js/viz";
+import { API_ENDPOINTS } from "../../config/api";
 
 const DFAorNFA = ({ transitions, start_state, end_states, states, symbols }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -30,7 +31,7 @@ const DFAorNFA = ({ transitions, start_state, end_states, states, symbols }) => 
         (symbols.includes('ɛ') ? symbols : [...symbols, 'ɛ']) :
         symbols.filter(s => s !== 'ɛ');
 
-      const response = await axios.post("http://localhost:5000/api/check-fa-type", {
+      const response = await axios.post(API_ENDPOINTS.CHECK_FA_TYPE, {
         transitions,
         symbols: symbolsToSend,
         start_state,
@@ -66,7 +67,7 @@ const DFAorNFA = ({ transitions, start_state, end_states, states, symbols }) => 
     setImageData(null);
 
     try {
-      const response = await axios.post("http://localhost:5000/api/generate-automaton-image", {
+      const response = await axios.post(API_ENDPOINTS.GENERATE_AUTOMATON_IMAGE, {
         transitions,
         symbols,
         start_state,

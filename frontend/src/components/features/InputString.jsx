@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { instance } from "@viz-js/viz";
+import { API_ENDPOINTS } from "../../config/api";
 
 const InputString = ({ transitions, start_state, end_states, states, symbols }) => {
   const [inputStr, setInputStr] = useState("");
@@ -75,7 +76,7 @@ const InputString = ({ transitions, start_state, end_states, states, symbols }) 
     setPathVisualization(null);
 
     try {
-      const response = await axios.post("http://localhost:5000/api/test-input-string", {
+      const response = await axios.post(API_ENDPOINTS.TEST_INPUT_STRING, {
         transitions,
         start_state,
         end_states,
