@@ -163,7 +163,7 @@ const DFAMinimizer = ({ transitions, start_state, end_states, states, symbols })
 
       <button
         onClick={handleMinimize}
-        className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 disabled:bg-purple-300"
+        className="bg-[#1a365d] text-white px-4 py-2 rounded hover:bg-[#1a365d] disabled:bg-[#1a365d]"
         disabled={isLoading || isGeneratingImage}
       >
         {isLoading ? "Minimizing..." : isGeneratingImage ? "Generating Image..." : "Minimize DFA"}
