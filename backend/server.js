@@ -2,6 +2,9 @@ import express from "express";
 import cors from "cors";
 import morgan from 'morgan';
 import automatonRoutes from "./routes/automatonRoutes.js";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const PORT = process.env.PORT || 5000;
 
