@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { instance } from "@viz-js/viz";
+import { API_ENDPOINTS } from "../../config/api";
 
 const InputString = ({ transitions, start_state, end_states, states, symbols }) => {
   const [inputStr, setInputStr] = useState("");
@@ -75,7 +76,7 @@ const InputString = ({ transitions, start_state, end_states, states, symbols }) 
     setPathVisualization(null);
 
     try {
-      const response = await axios.post("http://localhost:5000/api/test-input-string", {
+      const response = await axios.post(API_ENDPOINTS.TEST_INPUT_STRING, {
         transitions,
         start_state,
         end_states,
@@ -101,7 +102,7 @@ const InputString = ({ transitions, start_state, end_states, states, symbols }) 
             accepted,
             path,
             final_state,
-            message: accepted ? "String Accepted ✅" : "String Rejected ❌"
+            message: accepted ? "String Accepted" : "String Rejected"
           });
 
           // Generate path visualization
@@ -168,7 +169,7 @@ const InputString = ({ transitions, start_state, end_states, states, symbols }) 
 
         <button
           onClick={handleTestString}
-          className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 disabled:bg-purple-300"
+          className="bg-[#1a365d] text-white px-4 py-2 rounded hover:bg-[#1a365d] disabled:bg-[#1a365d]"
           disabled={isTesting || !inputStr || validationErrors.length > 0}
         >
           {isTesting ? "Testing..." : "Test Input String"}

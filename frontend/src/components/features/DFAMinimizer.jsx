@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { API_ENDPOINTS } from "../../config/api";
 
 const DFAMinimizer = ({ transitions, start_state, end_states, states, symbols }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -31,7 +32,7 @@ const DFAMinimizer = ({ transitions, start_state, end_states, states, symbols })
         (symbols.includes('ɛ') ? symbols : [...symbols, 'ɛ']) : 
         symbols.filter(s => s !== 'ɛ');
 
-      const response = await axios.post("http://localhost:5000/api/minimize-dfa", {
+      const response = await axios.post(API_ENDPOINTS.MINIMIZE_DFA, {
         transitions,
         symbols: symbolsToSend,
         start_state,
@@ -73,7 +74,7 @@ const DFAMinimizer = ({ transitions, start_state, end_states, states, symbols })
     setImageError(null);
 
     try {
-      const response = await axios.post("http://localhost:5000/api/generate-automaton-image", {
+      const response = await axios.post(API_ENDPOINTS.GENERATE_AUTOMATON_IMAGE, {
         transitions: minimizedDFA.transitions,
         symbols: minimizedDFA.symbols,
         start_state: minimizedDFA.start_state,
@@ -162,7 +163,7 @@ const DFAMinimizer = ({ transitions, start_state, end_states, states, symbols })
 
       <button
         onClick={handleMinimize}
-        className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 disabled:bg-purple-300"
+        className="bg-[#1a365d] text-white px-4 py-2 rounded hover:bg-[#1a365d] disabled:bg-[#1a365d]"
         disabled={isLoading || isGeneratingImage}
       >
         {isLoading ? "Minimizing..." : isGeneratingImage ? "Generating Image..." : "Minimize DFA"}

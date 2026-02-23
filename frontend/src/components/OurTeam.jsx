@@ -11,14 +11,24 @@ const OurTeam = () => {
                     <p>Meet the talented individuals behind the project.</p>
                 </div>
                 <div className='w-full grid grid-cols-3 gap-10'>
-                    <img className='transition ease-in-out hover:scale-107' src="./40.jpg" alt="" />
-                    <img className='transition ease-in-out hover:scale-107' src="./37.jpg" alt="" />
-                    <img className='transition ease-in-out hover:scale-107' src="./ahmeth.png" alt="" />
-                    <a href="https://github.com/Sophavisnuka">
-                        <img className='transition ease-in-out hover:scale-107' src="./38.jpg" alt="" />
+                    <a href="https://github.com/SeaHuyty" target='_blank'>
+                        <img className='transition ease-in-out hover:scale-107' src="https://avatars.githubusercontent.com/u/185038956?v=4" alt="SeaHuyty" />
                     </a>
-                    <img className='transition ease-in-out hover:scale-107' src="./39.jpg" alt="" />
-                    <img className='transition ease-in-out hover:scale-107' src="./41.jpg" alt="" />
+                    <a href="https://github.com/Ming-99s" target='_blank'>
+                        <img className='transition ease-in-out hover:scale-107' src="https://avatars.githubusercontent.com/u/169033882?v=4" alt="LeeMing" />
+                    </a>
+                    <a href="https://github.com/PhaySometh" target='_blank'>
+                        <img className='transition ease-in-out hover:scale-107' src="https://avatars.githubusercontent.com/u/169027524?v=4" alt="LeeMing" />
+                    </a>
+                    <a href="https://github.com/Sophavisnuka" target='_blank'>
+                        <img className='transition ease-in-out hover:scale-107' src="https://avatars.githubusercontent.com/u/168633610?v=4" alt="Nuka" />
+                    </a>
+                    <a href="https://github.com/UmLyrithyreach" target='_blank'>
+                        <img className='transition ease-in-out hover:scale-107' src="https://avatars.githubusercontent.com/u/170098956?v=4" alt="RithyReach" />
+                    </a>
+                    <a href="https://github.com/ChhunHour72" target='_blank'>
+                        <img className='transition ease-in-out hover:scale-107' src="https://avatars.githubusercontent.com/u/185312749?v=4" alt="Chhunhour" />
+                    </a>
                 </div>
             </div>
         </div>

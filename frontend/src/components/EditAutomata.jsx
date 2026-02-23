@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Trash2 } from 'lucide-react';
-import axios from 'axios';
+import { getAutomatonById, updateAutomaton, deleteAutomaton } from '../services/storageService';
+import Navbar from './Navbar';
 
 // Import the same components used in NewAutomata
 import MultipleSelection from './MultipleSeletion';
@@ -24,12 +25,12 @@ export default function EditAutomata() {
     const [transitions, setTransitions] = useState({});
 
     useEffect(() => {
-        const fetchAutomaton = async () => {
+        const fetchAutomaton = () => {
             try {
                 setLoading(true);
-                const response = await axios.get(`http://localhost:5000/api/automaton/${id}`);
-                if (response.data.success) {
-                    const automaton = response.data.automaton;
+                const automaton = getAutomatonById(id);
+                
+                if (automaton) {
                     setFaName(automaton.name);
                     setStates(automaton.states);
                     setSymbols(automaton.symbols);
@@ -41,7 +42,7 @@ export default function EditAutomata() {
                     setStatesText(automaton.states.join(','));
                     setSymbolsText(automaton.symbols.join(','));
                 } else {
-                    alert("Failed to load automaton");
+                    alert("Automaton not found");
                     navigate("/");
                 }
             } catch (err) {
@@ -58,7 +59,7 @@ export default function EditAutomata() {
         }
     }, [id, navigate]);
 
-    const handleUpdate = async () => {
+    const handleUpdate = () => {
         if (!faName.trim()) {
             alert("Please enter a name for the automaton");
             return;
@@ -76,22 +77,21 @@ export default function EditAutomata() {
             return;
         }
 
-        const payload = {
-            name: faName,
-            states,
-            symbols,
-            startState,
-            finalStates,
-            transitions
-        };
-
         try {
-            const response = await axios.put(`http://localhost:5000/api/automaton/${id}`, payload);
-            if (response.data.success) {
+            const result = updateAutomaton(id, {
+                name: faName,
+                states,
+                symbols,
+                startState,
+                finalStates,
+                transitions
+            });
+
+            if (result.success) {
                 alert("Automaton updated successfully!");
                 navigate("/");
             } else {
-                alert("Failed to update automaton: " + response.data.error);
+                alert("Failed to update automaton: " + result.error);
             }
         } catch (err) {
             console.error("Error updating automaton:", err);
@@ -99,18 +99,18 @@ export default function EditAutomata() {
         }
     };
 
-    const handleDelete = async () => {
+    const handleDelete = () => {
         if (!window.confirm("Are you sure you want to delete this automaton? This action cannot be undone.")) {
             return;
         }
 
         try {
-            const response = await axios.delete(`http://localhost:5000/api/automaton/${id}`);
-            if (response.data.success) {
+            const result = deleteAutomaton(id);
+            if (result.success) {
                 alert("Automaton deleted successfully!");
                 navigate("/");
             } else {
-                alert("Failed to delete automaton: " + response.data.error);
+                alert("Failed to delete automaton: " + result.error);
             }
         } catch (err) {
             console.error("Error deleting automaton:", err);
@@ -160,170 +160,224 @@ export default function EditAutomata() {
 
     if (loading) {
         return (
-            <div className="max-w-6xl mx-auto p-6">
-                <div className="text-center">Loading automaton...</div>
+            <div className="min-h-screen">
+                <Navbar />
+                <div className="flex justify-center items-center h-screen">
+                    <div className="text-center">
+                        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-[#1a365d] mx-auto mb-4"></div>
+                        <p className="text-gray-600 text-lg">Loading automaton...</p>
+                    </div>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="max-w-6xl mx-auto p-6">
-            <h1 className="text-2xl font-bold mb-4 text-center">Edit Automata</h1>
-            
-            <div className="flex justify-between items-end gap-10">
-                <button
-                    onClick={() => navigate('/')}
-                    className="bg-[#1a365d] text-white px-4 py-2 rounded hover:bg-blue-600 w-32 flex items-center justify-center gap-2 hover:scale-105 transition ease-in-out"
-                >
-                    <ArrowLeft className="w-4 h-4" />
-                    <span>Back</span>
-                </button>
+        <div className="min-h-screen">
+            <Navbar />
+            <div className="max-w-7xl mx-auto px-6 py-8">
+                {/* Header Section */}
+                <div className="mb-8 animate-fade-in">
+                    <div className="flex items-center justify-between mb-6">
+                        <div>
+                            <h1 className="text-4xl font-bold text-gray-800 mb-2">Edit Automaton</h1>
+                            <p className="text-gray-600">Modify your DFA or NFA specifications</p>
+                        </div>
+                        <button
+                            onClick={() => navigate('/')}
+                            className="flex items-center gap-2 px-5 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-all duration-300 hover:shadow-md"
+                        >
+                            <ArrowLeft className="w-5 h-5" />
+                            <span>Back</span>
+                        </button>
+                    </div>
 
-                <div className="mb-0 w-full">
-                    <label className="block mb-1 font-medium">FA Name</label>
-                    <input
-                        value={faName}
-                        onChange={(e) => setFaName(e.target.value)}
-                        type="text"
-                        placeholder="Automata name"
-                        className="w-full p-2 border rounded"
-                    />
+                    {/* Name & Actions Section */}
+                    <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-100 mb-6">
+                        <div className="flex gap-4 items-end">
+                            <div className="flex-1">
+                                <label className="flex items-center gap-2 mb-2 font-semibold text-gray-700">
+                                    <svg className="w-5 h-5 text-[#1a365d]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                    </svg>
+                                    Automaton Name
+                                </label>
+                                <input
+                                    value={faName}
+                                    onChange={(e) => setFaName(e.target.value)}
+                                    type="text"
+                                    placeholder="e.g., Binary String Acceptor"
+                                    className="w-full p-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1a365d] focus:border-transparent transition-all duration-300"
+                                />
+                            </div>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={handleUpdate}
+                                    className="px-6 py-3 bg-gradient-to-r from-[#1a365d] to-[#2d4a7c] text-white rounded-xl font-semibold hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
+                                >
+                                    <Save className="w-5 h-5" />
+                                    <span>Update</span>
+                                </button>
+                                
+                                <button
+                                    onClick={handleDelete}
+                                    className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-semibold hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
+                                >
+                                    <Trash2 className="w-5 h-5" />
+                                    <span>Delete</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* States & Symbols Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-100">
+                            <label className="flex items-center gap-2 mb-3 font-semibold text-gray-700">
+                                <svg className="w-5 h-5 text-[#1a365d]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                States
+                            </label>
+                            <input
+                                placeholder="q0, q1, q2"
+                                value={statesText}
+                                onChange={handleStatesChange}
+                                type="text"
+                                className="w-full p-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1a365d] focus:border-transparent transition-all duration-300"
+                            />
+                            <p className="text-sm text-gray-500 mt-2">Comma-separated state names</p>
+                        </div>
+
+                        <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-100">
+                            <label className="flex items-center gap-2 mb-3 font-semibold text-gray-700">
+                                <svg className="w-5 h-5 text-[#1a365d]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                                </svg>
+                                Input Symbols
+                            </label>
+                            <input
+                                placeholder="0, 1"
+                                value={symbolsText}
+                                onChange={handleSymbolsChange}
+                                type="text"
+                                className="w-full p-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1a365d] focus:border-transparent transition-all duration-300"
+                            />
+                            <p className="text-sm text-gray-500 mt-2">Epsilon (ɛ) added automatically for NFA</p>
+                        </div>
+                    </div>
+
+                    {/* Start & Final States */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-100">
+                            <label className="flex items-center gap-2 mb-3 font-semibold text-gray-700">
+                                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                </svg>
+                                Start State
+                            </label>
+                            <SingleSelection 
+                                options={states}
+                                handleStartStateChange={handleStartStateChange}
+                                initialState={startState}
+                            />
+                        </div>
+
+                        <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-100">
+                            <label className="flex items-center gap-2 mb-3 font-semibold text-gray-700">
+                                <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                                </svg>
+                                Final States
+                            </label>
+                            <MultipleSelection
+                                options={states}
+                                handleEndStatesChange={handleFinalStatesChange}
+                                initialSelect={finalStates}
+                            />
+                        </div>
+                    </div>
                 </div>
 
-                <div className="flex gap-2">
-                    <button
-                        onClick={handleUpdate}
-                        className="bg-[#1a365d] text-white px-4 py-2 rounded hover:bg-blue-600 w-32 flex items-center justify-center gap-2 hover:scale-105 transition ease-in-out"
-                    >
-                        <Save className="w-4 h-4" />
-                        <span>Update</span>
-                    </button>
-                    
-                    <button
-                        onClick={handleDelete}
-                        className="bg-[#FF4438] text-white px-4 py-2 rounded hover:bg-red-600 w-32 flex items-center justify-center gap-2 hover:scale-105 transition ease-in-out"
-                    >
-                        <Trash2 className="w-4 h-4" />
-                        <span>Delete</span>
-                    </button>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 mb-4">
-                <div>
-                    <label className="block mb-1 font-medium">States (comma-separated)</label>
-                    <input
-                        placeholder="q0,q1,q2"
-                        value={statesText}
-                        onChange={handleStatesChange}
-                        type="text"
-                        className="w-full p-2 border rounded"
-                    />
-                </div>
-
-                <div>
-                    <label className="block mb-1 font-medium">Symbols (comma-separated)</label>
-                    <input
-                        placeholder="0,1 (ɛ will be added automatically)"
-                        value={symbolsText}
-                        onChange={handleSymbolsChange}
-                        type="text"
-                        className="w-full p-2 border rounded"
-                    />
-                    <p className="text-sm text-gray-600 mt-1">
-                        Note: Epsilon (ɛ) column is available for NFA transitions. System automatically detects DFA/NFA type.
-                    </p>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label className="block mb-1 font-medium">Start State</label>
-                    <SingleSelection 
-                        options={states}
-                        handleStartStateChange={handleStartStateChange}
-                        initialState={startState}
-                    />
-                </div>
-
-                <div>
-                    <label className="block mb-1 font-medium">Final State</label>
-                    <MultipleSelection
-                        options={states}
-                        handleEndStatesChange={handleFinalStatesChange}
-                        initialSelect={finalStates}
-                    />
-                </div>
-            </div>
-
-            <div className="overflow-x-auto mb-4">
-                <table className="min-w-full border">
-                    <thead>
-                        <tr>
-                            <th className="border p-2">State</th>
-                            {symbols.map(sym => (
-                                <th key={sym} className="border p-2">{sym}</th>
-                            ))}
-                            <th className="border p-2">ɛ</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {states.map(state => (
-                            <tr key={state}>
-                                <td className="border p-2">{state}</td>
-                                {symbols.map(symbol => (
-                                    <td key={`${state}-${symbol}`} className="border p-2">
-                                        <MultipleSelection
-                                            options={states}
-                                            initialSelect={transitions[state]?.[symbol] || []}
-                                            handleEndStatesChange={(selected) => {
-                                                setTransitions((prev) => ({
-                                                    ...prev,
-                                                    [state]: {
-                                                        ...prev[state],
-                                                        [symbol]: selected,
-                                                    },
-                                                }));
-                                            }}
-                                        />
-                                    </td>
+                {/* Transition Table */}
+                <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-100 mb-6">
+                    <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <svg className="w-6 h-6 text-[#1a365d]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+                        </svg>
+                        Transition Function
+                    </h3>
+                    <div className="overflow-x-auto">
+                        <table className="w-full border-collapse">
+                            <thead>
+                                <tr className="bg-gradient-to-r from-[#1a365d] to-[#2d4a7c] text-white">
+                                    <th className="border-2 border-gray-300 p-3 font-semibold">State</th>
+                                    {symbols.map(sym => (
+                                        <th key={sym} className="border-2 border-gray-300 p-3 font-semibold">{sym}</th>
+                                    ))}
+                                    <th className="border-2 border-gray-300 p-3 font-semibold">ɛ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {states.map((state, idx) => (
+                                    <tr key={state} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                                        <td className="border-2 border-gray-200 p-3 font-medium text-gray-700">{state}</td>
+                                        {symbols.map(symbol => (
+                                            <td key={`${state}-${symbol}`} className="border-2 border-gray-200 p-2">
+                                                <MultipleSelection
+                                                    options={states}
+                                                    initialSelect={transitions[state]?.[symbol] || []}
+                                                    handleEndStatesChange={(selected) => {
+                                                        setTransitions((prev) => ({
+                                                            ...prev,
+                                                            [state]: {
+                                                                ...prev[state],
+                                                                [symbol]: selected,
+                                                            },
+                                                        }));
+                                                    }}
+                                                />
+                                            </td>
+                                        ))}
+                                        <td key={`${state}-ɛ`} className="border-2 border-gray-200 p-2">
+                                            <MultipleSelection
+                                                options={states}
+                                                initialSelect={transitions[state]?.['ɛ'] || []}
+                                                handleEndStatesChange={(selected) => {
+                                                    setTransitions((prev) => ({
+                                                        ...prev,
+                                                        [state]: {
+                                                            ...prev[state],
+                                                            'ɛ': selected,
+                                                        },
+                                                    }));
+                                                }}
+                                            />
+                                        </td>
+                                    </tr>
                                 ))}
-                                <td key={`${state}-ɛ`} className="border p-2">
-                                    <MultipleSelection
-                                        options={states}
-                                        initialSelect={transitions[state]?.['ɛ'] || []}
-                                        handleEndStatesChange={(selected) => {
-                                            setTransitions((prev) => ({
-                                                ...prev,
-                                                [state]: {
-                                                    ...prev[state],
-                                                    'ɛ': selected,
-                                                },
-                                            }));
-                                        }}
-                                    />
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
 
-            <Features
-                transitions={transitions}
-                symbols={symbols}
-                start_state={startState}
-                end_states={finalStates}
-                states={states}
-                fa={{
-                    name: faName,
-                    states: states,
-                    symbols: symbols,
-                    start_state: startState,
-                    end_states: finalStates,
-                    transitions: transitions,
-                }}
-            />
+                {/* Features Section */}
+                <Features
+                    transitions={transitions}
+                    symbols={symbols}
+                    start_state={startState}
+                    end_states={finalStates}
+                    states={states}
+                    fa={{
+                        name: faName,
+                        states: states,
+                        symbols: symbols,
+                        start_state: startState,
+                        end_states: finalStates,
+                        transitions: transitions,
+                    }}
+                />
+            </div>
         </div>
     );
 }
