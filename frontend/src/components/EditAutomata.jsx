@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { ArrowLeft, Save, Trash2 } from 'lucide-react';
 import { getAutomatonById, updateAutomaton, deleteAutomaton } from '../services/storageService';
 import Navbar from './Navbar';
@@ -15,6 +16,7 @@ export default function EditAutomata() {
     
     // State variables (same as NewAutomata)
     const [loading, setLoading] = useState(true);
+    const [deleteModal, setDeleteModal] = useState(false);
     const [statesText, setStatesText] = useState("");
     const [symbolsText, setSymbolsText] = useState("");
     const [faName, setFaName] = useState("");
@@ -42,12 +44,12 @@ export default function EditAutomata() {
                     setStatesText(automaton.states.join(','));
                     setSymbolsText(automaton.symbols.join(','));
                 } else {
-                    alert("Automaton not found");
+                    toast.error("Automaton not found");
                     navigate("/");
                 }
             } catch (err) {
                 console.error("Error fetching automaton:", err);
-                alert("Failed to load automaton");
+                toast.error("Failed to load automaton");
                 navigate("/");
             } finally {
                 setLoading(false);
@@ -59,9 +61,20 @@ export default function EditAutomata() {
         }
     }, [id, navigate]);
 
+    useEffect(() => {
+        if (deleteModal) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [deleteModal]);
+
     const handleUpdate = () => {
         if (!faName.trim()) {
-            alert("Please enter a name for the automaton");
+            toast.error("Please enter a name for the automaton");
             return;
         }
 
@@ -73,7 +86,7 @@ export default function EditAutomata() {
         );
         
         if (!isTransitionsComplete) {
-            alert("Please complete all transition entries");
+            toast.error("Please complete all transition entries");
             return;
         }
 
@@ -88,33 +101,35 @@ export default function EditAutomata() {
             });
 
             if (result.success) {
-                alert("Automaton updated successfully!");
+                toast.success("Automaton updated successfully!");
                 navigate("/");
             } else {
-                alert("Failed to update automaton: " + result.error);
+                toast.error("Failed to update automaton: " + result.error);
             }
         } catch (err) {
             console.error("Error updating automaton:", err);
-            alert("Failed to update automaton. Please try again.");
+            toast.error("Failed to update automaton. Please try again.");
         }
     };
 
     const handleDelete = () => {
-        if (!window.confirm("Are you sure you want to delete this automaton? This action cannot be undone.")) {
-            return;
-        }
+        setDeleteModal(true);
+    };
 
+    const confirmDelete = () => {
         try {
             const result = deleteAutomaton(id);
             if (result.success) {
-                alert("Automaton deleted successfully!");
+                toast.success("Automaton deleted successfully!");
                 navigate("/");
             } else {
-                alert("Failed to delete automaton: " + result.error);
+                toast.error("Failed to delete automaton: " + result.error);
             }
         } catch (err) {
             console.error("Error deleting automaton:", err);
-            alert("Failed to delete automaton. Please try again.");
+            toast.error("Failed to delete automaton. Please try again.");
+        } finally {
+            setDeleteModal(false);
         }
     };
 
@@ -175,29 +190,64 @@ export default function EditAutomata() {
     return (
         <div className="min-h-screen">
             <Navbar />
-            <div className="max-w-7xl mx-auto px-6 py-8">
+            
+            {/* Delete Confirmation Modal */}
+            {deleteModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden">
+                    {/* Backdrop */}
+                    <div 
+                        className="absolute inset-0"
+                        style={{ backgroundColor: 'rgba(0, 0, 0, 0.15)' }}
+                        onClick={() => setDeleteModal(false)}
+                    />
+                    
+                    {/* Modal Content */}
+                    <div className="relative bg-white rounded-2xl shadow-2xl p-6 max-w-md mx-4 z-10">
+                        <div className="mb-4">
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">Delete Automaton?</h3>
+                            <p className="text-gray-600">This action cannot be undone. Are you sure you want to delete this automaton?</p>
+                        </div>
+                        <div className="flex gap-3 justify-end">
+                            <button
+                                onClick={() => setDeleteModal(false)}
+                                className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                className="px-5 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
                 {/* Header Section */}
-                <div className="mb-8 animate-fade-in">
-                    <div className="flex items-center justify-between mb-6">
+                <div className="mb-6 sm:mb-8 animate-fade-in">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
                         <div>
-                            <h1 className="text-4xl font-bold text-gray-800 mb-2">Edit Automaton</h1>
-                            <p className="text-gray-600">Modify your DFA or NFA specifications</p>
+                            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-2">Edit Automaton</h1>
+                            <p className="text-sm sm:text-base text-gray-600">Modify your DFA or NFA specifications</p>
                         </div>
                         <button
                             onClick={() => navigate('/')}
-                            className="flex items-center gap-2 px-5 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-all duration-300 hover:shadow-md"
+                            className="flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-all duration-300 hover:shadow-md text-sm sm:text-base"
                         >
-                            <ArrowLeft className="w-5 h-5" />
+                            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                             <span>Back</span>
                         </button>
                     </div>
 
                     {/* Name & Actions Section */}
-                    <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-100 mb-6">
-                        <div className="flex gap-4 items-end">
+                    <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-md border border-gray-100 mb-4 sm:mb-6">
+                        <div className="flex flex-col gap-3 sm:gap-4">
                             <div className="flex-1">
-                                <label className="flex items-center gap-2 mb-2 font-semibold text-gray-700">
-                                    <svg className="w-5 h-5 text-[#1a365d]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <label className="flex items-center gap-2 mb-2 font-semibold text-gray-700 text-sm sm:text-base">
+                                    <svg className="w-4 h-4 sm:w-5 sm:h-5 text-[#1a365d]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                                     </svg>
                                     Automaton Name
@@ -207,23 +257,23 @@ export default function EditAutomata() {
                                     onChange={(e) => setFaName(e.target.value)}
                                     type="text"
                                     placeholder="e.g., Binary String Acceptor"
-                                    className="w-full p-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1a365d] focus:border-transparent transition-all duration-300"
+                                    className="w-full p-2.5 sm:p-3 text-sm sm:text-base border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1a365d] focus:border-transparent transition-all duration-300"
                                 />
                             </div>
-                            <div className="flex gap-3">
+                            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                                 <button
                                     onClick={handleUpdate}
-                                    className="px-6 py-3 bg-gradient-to-r from-[#1a365d] to-[#2d4a7c] text-white rounded-xl font-semibold hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
+                                    className="flex-1 sm:flex-none px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-[#1a365d] to-[#2d4a7c] text-white rounded-xl font-semibold hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 text-sm sm:text-base"
                                 >
-                                    <Save className="w-5 h-5" />
+                                    <Save className="w-4 h-4 sm:w-5 sm:h-5" />
                                     <span>Update</span>
                                 </button>
                                 
                                 <button
                                     onClick={handleDelete}
-                                    className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-semibold hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
+                                    className="flex-1 sm:flex-none px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-semibold hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 text-sm sm:text-base"
                                 >
-                                    <Trash2 className="w-5 h-5" />
+                                    <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
                                     <span>Delete</span>
                                 </button>
                             </div>
@@ -231,10 +281,10 @@ export default function EditAutomata() {
                     </div>
 
                     {/* States & Symbols Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-100">
-                            <label className="flex items-center gap-2 mb-3 font-semibold text-gray-700">
-                                <svg className="w-5 h-5 text-[#1a365d]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
+                        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-md border border-gray-100">
+                            <label className="flex items-center gap-2 mb-2 sm:mb-3 font-semibold text-gray-700 text-sm sm:text-base">
+                                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-[#1a365d]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                                 States
@@ -244,14 +294,14 @@ export default function EditAutomata() {
                                 value={statesText}
                                 onChange={handleStatesChange}
                                 type="text"
-                                className="w-full p-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1a365d] focus:border-transparent transition-all duration-300"
+                                className="w-full p-2.5 sm:p-3 text-sm sm:text-base border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1a365d] focus:border-transparent transition-all duration-300"
                             />
-                            <p className="text-sm text-gray-500 mt-2">Comma-separated state names</p>
+                            <p className="text-xs sm:text-sm text-gray-500 mt-2">Comma-separated state names</p>
                         </div>
 
-                        <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-100">
-                            <label className="flex items-center gap-2 mb-3 font-semibold text-gray-700">
-                                <svg className="w-5 h-5 text-[#1a365d]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-md border border-gray-100">
+                            <label className="flex items-center gap-2 mb-2 sm:mb-3 font-semibold text-gray-700 text-sm sm:text-base">
+                                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-[#1a365d]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
                                 </svg>
                                 Input Symbols
@@ -261,17 +311,17 @@ export default function EditAutomata() {
                                 value={symbolsText}
                                 onChange={handleSymbolsChange}
                                 type="text"
-                                className="w-full p-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1a365d] focus:border-transparent transition-all duration-300"
+                                className="w-full p-2.5 sm:p-3 text-sm sm:text-base border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1a365d] focus:border-transparent transition-all duration-300"
                             />
-                            <p className="text-sm text-gray-500 mt-2">Epsilon (ɛ) added automatically for NFA</p>
+                            <p className="text-xs sm:text-sm text-gray-500 mt-2">Epsilon (ɛ) added automatically for NFA</p>
                         </div>
                     </div>
 
                     {/* Start & Final States */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-100">
-                            <label className="flex items-center gap-2 mb-3 font-semibold text-gray-700">
-                                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
+                        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-md border border-gray-100">
+                            <label className="flex items-center gap-2 mb-2 sm:mb-3 font-semibold text-gray-700 text-sm sm:text-base">
+                                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                                 </svg>
                                 Start State
@@ -283,9 +333,9 @@ export default function EditAutomata() {
                             />
                         </div>
 
-                        <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-100">
-                            <label className="flex items-center gap-2 mb-3 font-semibold text-gray-700">
-                                <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-md border border-gray-100">
+                            <label className="flex items-center gap-2 mb-2 sm:mb-3 font-semibold text-gray-700 text-sm sm:text-base">
+                                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                                 </svg>
                                 Final States
@@ -300,28 +350,29 @@ export default function EditAutomata() {
                 </div>
 
                 {/* Transition Table */}
-                <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-100 mb-6">
-                    <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <svg className="w-6 h-6 text-[#1a365d]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-md border border-gray-100 mb-4 sm:mb-6">
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4 flex items-center gap-2">
+                        <svg className="w-5 h-5 sm:w-6 sm:h-6 text-[#1a365d]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
                         </svg>
-                        Transition Function
+                        <span className='hidden sm:inline'>Transition Function</span>
+                        <span className='sm:hidden'>Transitions</span>
                     </h3>
-                    <div className="overflow-x-auto">
-                        <table className="w-full border-collapse">
+                    <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+                        <table className="w-full border-collapse min-w-[500px]">
                             <thead>
                                 <tr className="bg-gradient-to-r from-[#1a365d] to-[#2d4a7c] text-white">
-                                    <th className="border-2 border-gray-300 p-3 font-semibold">State</th>
+                                    <th className="border-2 border-gray-300 p-2 sm:p-3 font-semibold text-xs sm:text-base">State</th>
                                     {symbols.map(sym => (
-                                        <th key={sym} className="border-2 border-gray-300 p-3 font-semibold">{sym}</th>
+                                        <th key={sym} className="border-2 border-gray-300 p-2 sm:p-3 font-semibold text-xs sm:text-base">{sym}</th>
                                     ))}
-                                    <th className="border-2 border-gray-300 p-3 font-semibold">ɛ</th>
+                                    <th className="border-2 border-gray-300 p-2 sm:p-3 font-semibold text-xs sm:text-base">ɛ</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {states.map((state, idx) => (
                                     <tr key={state} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                                        <td className="border-2 border-gray-200 p-3 font-medium text-gray-700">{state}</td>
+                                        <td className="border-2 border-gray-200 p-2 sm:p-3 font-medium text-gray-700 text-xs sm:text-base">{state}</td>
                                         {symbols.map(symbol => (
                                             <td key={`${state}-${symbol}`} className="border-2 border-gray-200 p-2">
                                                 <MultipleSelection
